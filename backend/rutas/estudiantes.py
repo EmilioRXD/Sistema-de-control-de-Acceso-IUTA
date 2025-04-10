@@ -16,7 +16,7 @@ async def añadir_estudiante(request: Estudiante, db: SessionDep) -> Estudiante:
     
     
 @router.get("/", response_model=List[Estudiante])
-async def obtener_estudiante(db: SessionDep) -> List[Estudiante]:
+async def obtener_estudiantes(db: SessionDep) -> List[Estudiante]:
     return crud.obtener_todos(Estudiante, db)
 
 

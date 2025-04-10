@@ -7,32 +7,32 @@ from typing import TypeVar
 
 #crud generico que sirve como base para los routers
 
-tabla = TypeVar("T")
+Tabla = TypeVar("Tabla")
 
-def añadir(request: tabla, db: Session) -> SQLModel:
+def añadir(request: Tabla, db: Session) -> SQLModel:
     db.add(request)
     db.commit()
     db.refresh(request)
     return request
 
-def obtener_todos(clase: tabla, db: Session) -> List[SQLModel]:
+def obtener_todos(clase: Tabla, db: Session) -> List[SQLModel]:
     return db.exec(select(clase)).scalars().all()
 
-def obtener_por_id(clase: tabla, id, db: Session) -> SQLModel:
+def obtener_por_id(clase: Tabla, id, db: Session) -> SQLModel:
     return db.get(clase, id)
 
-def obtener_por_campo(clase: tabla, nombre_campo: str, valor_esperado, db: Session) -> SQLModel:
+def obtener_por_campo(clase: Tabla, nombre_campo: str, valor_esperado, db: Session) -> SQLModel:
     return db.exec(
         select(clase).filter(clase.__dict__[nombre_campo] == valor_esperado)
         ).scalars().first()
 
-def remover(clase: tabla, nombre_campo: str, valor_esperado, db: Session) -> SQLModel:
-    obj = obtener_por_campo(clase, nombre_campo, valor_esperado, db)
+def remover(clase: Tabla, id, db: Session) -> SQLModel:
+    obj = obtener_por_id(clase, id, db)
     db.delete(obj)
     db.commit()
     return obj
 
-def actualizar(clase: tabla, id, datos_nuevos: SQLModel, db: Session) -> SQLModel:
+def actualizar(clase: Tabla, id, datos_nuevos: SQLModel, db: Session) -> SQLModel:
     obj = obtener_por_id(clase, id, db)
     datos = datos_nuevos.model_dump(exclude_unset=True)
     obj.sqlmodel_update(datos)

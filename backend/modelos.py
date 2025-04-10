@@ -15,9 +15,9 @@ class Usuario(SQLModel, table=True):
     contraseña: str
 
 class RegistroAcceso(SQLModel, table=True):
-    registro_id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
 
-    tarjeta_id: Optional[int] = Field(default=None, foreign_key="tarjetanfc.tarjeta_id")
+    tarjeta_id: Optional[int] = Field(default=None, foreign_key="tarjetanfc.id")
     tarjeta: Optional["TarjetaNFC"] = Relationship(back_populates="registros")
 
     fecha_hora_entrada : datetime
@@ -41,14 +41,14 @@ class Estudiante(SQLModel, table=True):
 
 
 class Pago(SQLModel, table=True):
-    pago_id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
 
     estudiante_id: Optional[int] = Field(default=None, foreign_key="estudiante.id")
     estudiante: Optional[Estudiante] = Relationship(back_populates="pagos")
 
 
 class TarjetaNFC(SQLModel, table=True):
-    tarjeta_id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[UUID] = Field(default=None, primary_key=True)
     estudiante_id: Optional[int] = Field(default=None, foreign_key="estudiante.id")
     estudiante: Optional[Estudiante] = Relationship(back_populates="tarjeta")
     uid: UUID
