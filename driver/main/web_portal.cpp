@@ -1,66 +1,35 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <DNSServer.h>
-#include <EEPROM.h>
 #include <ArduinoJson.h>
 #include "esp_mac.h"
+#include <EEPROM.h>
 
 #include "config_portal.h"
+#include "web_portal.h"
 
-#define EEPROM_SIZE 512
+
 #define SSID_ADDR 0
 #define PASS_ADDR 32
 
+
 const byte DNS_PORT = 53;
-DNSServer dnsServer;
-WebServer server(80);
 
 const char* apSSID = "ESP32_Config";
 const char* apPassword = "12345678";
-String savedSSID = "";
-String savedPassword = "";
 
-void setup() {
-  Serial.begin(115200);
-  EEPROM.begin(EEPROM_SIZE);
+static String savedSSID = "";
+static String savedPassword = "";
 
-  // Leer configuración guardada
-  savedSSID = EEPROM.readString(SSID_ADDR);
-  savedPassword = EEPROM.readString(PASS_ADDR);
 
-  if (savedSSID.length() > 0) {
-    Serial.println("[INFO] Intentando conectar a red guardada...");
-    connectToWiFi();
-  } else {
-    Serial.println("[INFO] Iniciando modo configuración");
-    startCaptivePortal();
-  }
-}
+DNSServer dnsServer;
+WebServer server(80);
 
-void loop() {
-  dnsServer.processNextRequest();
-  server.handleClient();
-}
-
-void startCaptivePortal() {
-  WiFi.softAP(apSSID, apPassword);
-  Serial.print("[INFO] AP creado: ");
-  Serial.println(apSSID);
-  Serial.print("[INFO] IP del AP: ");
-  Serial.println(WiFi.softAPIP());
-
-  // Configurar DNS captive portal
-  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
-
-  setupWebServer();
-}
-
-void connectToWiFi() {
+bool connectToWiFi() {
   WiFi.begin(savedSSID.c_str(), savedPassword.c_str());
 
-  Serial.print("[INFO] Conectando a ");
-  Serial.print(savedSSID);
-  Serial.println("...");
+  Serial.print("[INFO] Conectando a"); Serial.println(savedSSID);
+
 
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
@@ -71,34 +40,49 @@ void connectToWiFi() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\n[OK] Conectado!");
-    Serial.print("[INFO] IP local: ");
-    Serial.println(WiFi.localIP());
+    Serial.print("[INFO] IP local: "); Serial.println(WiFi.localIP());
+    return true;
   } else {
     Serial.println("\n[ERROR] No se pudo conectar");
     startCaptivePortal();
+    return false;
   }
-  borrarCredenciales();
+  //borrarCredenciales();
 }
 
-void setupWebServer() {
-  // Handler para el captive portal
-  server.on("/", handleRoot);
-  server.on("/generate_204", handleRoot);         // Android captive portal check
-  server.on("/fwlink", handleRoot);               // Microsoft captive portal check
-  server.on("/hotspot-detect.html", handleRoot);  // Apple captive portal
-  server.on("/connect", HTTP_POST, handleConnect);
-  server.on("/config", handleConfig);
 
-  server.onNotFound(handleRoot);  // Captura todas las URLs no definidas
+void borrarCredenciales() {
+  // Escribe cadenas vacías en las posiciones de memoria
+  EEPROM.writeString(SSID_ADDR, "");
+  EEPROM.writeString(PASS_ADDR, "");
 
-  server.begin();
-  Serial.println("[INFO] Servidor HTTP iniciado");
+  // Confirma los cambios en la EEPROM
+  EEPROM.commit();
+
+  Serial.println("Credenciales borradas de la EEPROM");
 }
 
-void handleRoot() {
-  server.sendHeader("Location", "http://192.168.4.1/config");
-  server.send(302, "text/plain", "");
+
+bool tryConnect() {
+  // Leer configuración guardada
+  savedSSID = EEPROM.readString(SSID_ADDR);
+  savedPassword = EEPROM.readString(PASS_ADDR);
+
+  //si hay una conexion guardada.
+  if (savedSSID.length() > 0) {
+    Serial.println("[INFO] Intentando conectar a red guardada...");
+    return connectToWiFi();
+  } else {
+    Serial.println("[INFO] Iniciando modo configuración");
+    startCaptivePortal();
+  }
 }
+
+void serverProcess() {
+  dnsServer.processNextRequest();
+  server.handleClient();
+}
+
 
 void handleConfig() {
   uint8_t mac[6];
@@ -173,13 +157,35 @@ void handleConnect() {
   }
 }
 
-void borrarCredenciales() {
-  // Escribe cadenas vacías en las posiciones de memoria
-  EEPROM.writeString(SSID_ADDR, "");
-  EEPROM.writeString(PASS_ADDR, "");
 
-  // Confirma los cambios en la EEPROM
-  EEPROM.commit();
+void handleRoot() {
+  server.sendHeader("Location", "http://192.168.4.1/config");
+  server.send(302, "text/plain", "");
+}
 
-  Serial.println("Credenciales borradas de la EEPROM");
+
+void setupWebServer() {
+  // Handler para el captive portal
+  server.on("/", handleRoot);
+  server.on("/generate_204", handleRoot);         // Android captive portal check
+  server.on("/fwlink", handleRoot);               // Microsoft captive portal check
+  server.on("/hotspot-detect.html", handleRoot);  // Apple captive portal
+  server.on("/connect", HTTP_POST, handleConnect);
+  server.on("/config", handleConfig);
+
+  server.onNotFound(handleRoot);  // Captura todas las URLs no definidas
+
+  server.begin();
+  Serial.println("[INFO] Servidor HTTP iniciado");
+}
+
+void startCaptivePortal() {
+  WiFi.softAP(apSSID, apPassword);
+  Serial.print("[INFO] AP creado: "); Serial.println(apSSID);
+  Serial.print("[INFO] IP del AP: "); Serial.println(WiFi.softAPIP());
+
+  // Configurar DNS captive portal
+  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+
+  setupWebServer();
 }

@@ -185,7 +185,6 @@ const char part1[] PROGMEM = R"raw(
             visibility: visible;
         }
 
-        /* Modal de contraseña y de resultado usan la misma clase base */
         .modal-content {
             background: #fff;
             padding: 2rem;
@@ -212,7 +211,6 @@ const char part1[] PROGMEM = R"raw(
             }
         }
 
-        /* Animación para ocultar el modal descendiendo */
         @keyframes descendOut {
             from {
                 opacity: 1;
@@ -248,7 +246,6 @@ const char part1[] PROGMEM = R"raw(
             outline: none;
         }
 
-        /* Contenedor del input + ícono */
         .input-with-icon {
             position: relative;
             margin-bottom: 1rem;
@@ -268,7 +265,6 @@ const char part1[] PROGMEM = R"raw(
             transition: color 0.3s;
         }
 
-        /* Spinner: se mostrará durante la validación */
         .spinner {
             width: 18px;
             height: 18px;
@@ -305,7 +301,6 @@ const char part1[] PROGMEM = R"raw(
             transform: translateY(-2px);
         }
 
-        /* Clases para input válido/erróneo */
         .valid input {
             border-color: #16C47F !important;
         }
