@@ -12,8 +12,8 @@ SessionDep = Annotated[Session, Depends(obtener_db)]
 #falta implementar los registros especificos como obtener todos los registros de un estudiante, etc
 
 
-@router.post("/añadir", response_model=RegistroAcceso)
-async def añadir_registro(request: RegistroAcceso, db: SessionDep) -> RegistroAcceso: 
+@router.post("/agregar", response_model=RegistroAcceso)
+async def agregar_registro(request: RegistroAcceso, db: SessionDep) -> RegistroAcceso: 
     return crud.añadir(request, db)
     
     

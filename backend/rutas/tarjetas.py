@@ -10,9 +10,19 @@ router = APIRouter()
 SessionDep = Annotated[Session, Depends(obtener_db)]
 
 
-@router.post("/añadir", response_model=TarjetaNFC)
-async def añadir_tarjeta(request: TarjetaNFC, db: SessionDep) -> TarjetaNFC: 
-    return crud.añadir(request, db)
+@router.post("/agregar", response_model=TarjetaNFC)
+async def agregar_tarjeta(request: TarjetaNFC, db: SessionDep) -> TarjetaNFC:
+
+    estudiante = crud.obtener_por_campo(Estudiante, "cedula", request.estudiante_cedula, db)
+    estudiante.tarjeta = request
+    request.estudiante = estudiante
+
+    db.add(request)
+
+    db.commit()
+    db.refresh(request)
+    db.refresh(estudiante)
+    return request
     
     
 @router.get("/", response_model=List[TarjetaNFC])
@@ -23,13 +33,20 @@ async def obtener_tarjetas(db: SessionDep) -> List[TarjetaNFC]:
 @router.get("/{tarjeta_id}", response_model=TarjetaNFC)
 async def obtener_tarjeta_por_id(tarjeta_id: int, db: SessionDep):
     #return db.exec(select(TarjetaNFC).filter(TarjetaNFC.id == usuario_id)).scalars().first()
-    return crud.obtener_por_campo(TarjetaNFC, "id", tarjeta_id, db=db)
+    return crud.obtener_por_campo(TarjetaNFC, "uid", tarjeta_id, db=db)
     
+
 @router.delete("/remover/{tarjeta_id}", response_model=TarjetaNFC)
 async def remover_tarjeta(tarjeta_id: int, db: SessionDep):
-    return crud.remover(TarjetaNFC, "id", tarjeta_id, db)
+    return crud.remover(TarjetaNFC, tarjeta_id, db)
 
 
 @router.patch("/actualizar/{tarjeta_id}", response_model=TarjetaNFC)
 async def actualizar_tarjeta(tarjeta_id: int, db: SessionDep, nueva_tarjeta: TarjetaNFC):
     return crud.actualizar(TarjetaNFC, tarjeta_id, nueva_tarjeta, db)
+
+
+@router.get("/estudiante/{tarjeta_id}", response_model=Estudiante)
+async def obtener_estudiante_por_tarjeta(tarjeta_id: int, db: SessionDep) -> Estudiante:
+    tarjeta = crud.obtener_por_campo(TarjetaNFC, "uid", tarjeta_id, db)
+    return tarjeta.estudiante

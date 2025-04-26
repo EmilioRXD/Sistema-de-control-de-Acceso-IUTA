@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Path, Depends
+from fastapi import APIRouter, HTTPException, Depends
 
-from config import obtener_db, engine
+from config import obtener_db
 from sqlmodel import Session
 import rutas.crud as crud
 from modelos import *
@@ -11,8 +11,8 @@ SessionDep = Annotated[Session, Depends(obtener_db)]
 
 
 
-@router.post("/añadir", response_model=Usuario)
-async def añadir_usuario(request: Usuario, db: SessionDep) -> Usuario: 
+@router.post("/agregar", response_model=Usuario)
+async def agregar_usuario(request: Usuario, db: SessionDep) -> Usuario: 
     return crud.añadir(request, db)
     
     
@@ -34,3 +34,4 @@ async def remover_usuario(usuario_id: int, db: SessionDep):
 @router.patch("/actualizar/{usuario_id}", response_model=Usuario)
 async def actualizar_usuario(usuario_id: int, db: SessionDep, nuevo_usuario: Usuario):
     return crud.actualizar(Usuario, usuario_id, nuevo_usuario, db)
+

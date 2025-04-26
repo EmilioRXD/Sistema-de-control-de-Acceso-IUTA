@@ -26,6 +26,8 @@ def obtener_por_campo(clase: Tabla, nombre_campo: str, valor_esperado, db: Sessi
         select(clase).filter(clase.__dict__[nombre_campo] == valor_esperado)
         ).scalars().first()
 
+
+
 def remover(clase: Tabla, id, db: Session) -> SQLModel:
     obj = obtener_por_id(clase, id, db)
     db.delete(obj)

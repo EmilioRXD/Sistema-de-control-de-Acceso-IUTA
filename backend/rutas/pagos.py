@@ -10,8 +10,8 @@ router = APIRouter()
 SessionDep = Annotated[Session, Depends(obtener_db)]
 
 
-@router.post("/añadir", response_model=Pago)
-async def añadir_pago(request: Pago, db: SessionDep) -> Pago: 
+@router.post("/agregar", response_model=Pago)
+async def agregar_pago(request: Pago, db: SessionDep) -> Pago: 
     return crud.añadir(request, db)
     
     
@@ -26,14 +26,9 @@ async def obtener_pago_por_id(pago_id: int, db: SessionDep):
     return crud.obtener_por_campo(Pago, "id", pago_id, db=db)
 
 
-#no se si deberia estar o no 
-
-@router.delete("/remover/{pago_id}", response_model=Pago)
-async def remover_pago(pago_id: int, db: SessionDep):
-    return crud.remover(Pago, "id", pago_id, db)
-
+@router.get("/{cedula_estudiante}", response_model=List[Pago])
+async def obtener_pagos_de_estudiante(cedula_estudiante: str, db: SessionDep) -> List[Pago]:
+    query = select(Pago).filter(Pago.estudiante_cedula == cedula_estudiante)
+    return db.exec(query).scalars().all()
 
 
-#@router.patch("/actualizar/{pago_id}", response_model=Pago)
-#async def actualizar_pago(pago_id: int, db: SessionDep, nuevo_pago: Pago):
-#    return crud.actualizar(Pago, pago_id, nuevo_pago, db)

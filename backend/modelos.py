@@ -8,6 +8,7 @@ from uuid import UUID
 
 
 class Usuario(SQLModel, table=True):
+    __tablename__ = "UsuariosAdmin"
     id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str
     apellido: str
@@ -15,9 +16,9 @@ class Usuario(SQLModel, table=True):
     contraseña: str
 
 class RegistroAcceso(SQLModel, table=True):
+    __tablename__ = "RegistrosAcceso"
     id: Optional[int] = Field(default=None, primary_key=True)
-
-    tarjeta_id: Optional[int] = Field(default=None, foreign_key="tarjetanfc.id")
+    tarjeta_id: Optional[int] = Field(default=None, foreign_key="TarjetasNFC.uid")
     tarjeta: Optional["TarjetaNFC"] = Relationship(back_populates="registros")
 
     fecha_hora_entrada : datetime
@@ -26,7 +27,8 @@ class RegistroAcceso(SQLModel, table=True):
 
 
 class Estudiante(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    __tablename__ = "Estudiantes"
+    cedula: Optional[str] = Field(default=None, primary_key=True)
     nombre : str
     apellido : str
     correo_electronico : str
@@ -41,20 +43,21 @@ class Estudiante(SQLModel, table=True):
 
 
 class Pago(SQLModel, table=True):
+    __tablename__ = "Pagos"
     id: Optional[int] = Field(default=None, primary_key=True)
 
-    estudiante_id: Optional[int] = Field(default=None, foreign_key="estudiante.id")
+    estudiante_cedula: Optional[str] = Field(default=None, foreign_key="Estudiantes.cedula")
     estudiante: Optional[Estudiante] = Relationship(back_populates="pagos")
 
 
 class TarjetaNFC(SQLModel, table=True):
-    id: Optional[UUID] = Field(default=None, primary_key=True)
-    estudiante_id: Optional[int] = Field(default=None, foreign_key="estudiante.id")
-    estudiante: Optional[Estudiante] = Relationship(back_populates="tarjeta")
-    uid: UUID
+    __tablename__ = "TarjetasNFC"
+    uid: int = Field(default=None, primary_key=True)
+    estudiante_cedula: Optional[str] = Field(default=None, foreign_key="Estudiantes.cedula")
     fecha_emision: date
     fecha_expiracion: date
     activa: bool
 
+    estudiante: Optional[Estudiante] = Relationship(back_populates="tarjeta")
     registros: List[RegistroAcceso] = Relationship(back_populates="tarjeta")
 
