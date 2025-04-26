@@ -10,8 +10,8 @@ union UID {
 };
 
 
-void printActualUID();
-uint32_t getActualUID();
+void PrintActualUID();
+uint32_t GetActualUID();
 String ReadBlockFromCard();
 void HaltReader();
 void InitCardReader();
