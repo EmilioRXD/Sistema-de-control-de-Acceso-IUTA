@@ -1,8 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import uvicorn
 from config import *
 import rutas
-
 
 
 

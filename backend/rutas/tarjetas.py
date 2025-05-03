@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Path, Depends
-
+from fastapi import APIRouter, HTTPException, Path, Depends, status
+from datetime import datetime, timezone, timedelta
 from config import obtener_db, engine
 from sqlmodel import Session
 import rutas.crud as crud
@@ -11,18 +11,39 @@ SessionDep = Annotated[Session, Depends(obtener_db)]
 
 
 @router.post("/agregar", response_model=TarjetaNFC)
-async def agregar_tarjeta(request: TarjetaNFC, db: SessionDep) -> TarjetaNFC:
+async def agregar_tarjeta(request: TarjetaForm, db: SessionDep) -> TarjetaNFC:
+
+    tarjeta = crud.obtener_por_campo(TarjetaNFC, "uid", request.uid, db)
+    if tarjeta is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Esta tarjeta ya existe en el sistema."
+        )
 
     estudiante = crud.obtener_por_campo(Estudiante, "cedula", request.estudiante_cedula, db)
-    estudiante.tarjeta = request
-    request.estudiante = estudiante
+    if estudiante is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No existe un estudiante con la cédula específicada."
+        )
+    
+    tarjeta = TarjetaNFC(
+        uid = request.uid,
+        estudiante_cedula=request.estudiante_cedula,
+        fecha_emision= datetime.now(timezone.utc),
+        fecha_expiracion= datetime.now(timezone.utc) + timedelta(days=365*2), #dos años?
+        activa=True
+    )
+    
+    estudiante.tarjeta = tarjeta
+    tarjeta.estudiante = estudiante
 
-    db.add(request)
+    db.add(tarjeta)
 
     db.commit()
-    db.refresh(request)
+    db.refresh(tarjeta)
     db.refresh(estudiante)
-    return request
+    return tarjeta
     
     
 @router.get("/", response_model=List[TarjetaNFC])

@@ -1,7 +1,8 @@
 from sqlmodel import Field, Session, SQLModel, create_engine
 
 #conectar con la base de datos
-URL_BASE_DE_DATOS = "postgresql://postgres:postgres@localhost:5432/test"
+#url: usuario:contraseña@host:puerto/nombre_base_de_datos
+URL_BASE_DE_DATOS = "mysql+pymysql://root:metal2005@localhost:3306/test_tesis"
 engine = create_engine(URL_BASE_DE_DATOS)
 
 

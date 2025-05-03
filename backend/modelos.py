@@ -3,8 +3,26 @@ from pydantic import BaseModel
 from sqlalchemy import *
 from datetime import date,datetime
 from sqlmodel import Field, SQLModel, Relationship
-from uuid import UUID
 
+
+class UsuarioForm(SQLModel):
+    nombre: str
+    apellido: str
+    correo_electronico: str
+    contraseña: str
+
+class Token(SQLModel):
+    access_token: str
+    refresh_token: str
+
+class TokenPayload(SQLModel):
+    sub: str = None
+    exp: int = None
+
+
+class AccessResponse(SQLModel):
+    result: bool
+    detail: str
 
 
 class Usuario(SQLModel, table=True):
@@ -18,7 +36,7 @@ class Usuario(SQLModel, table=True):
 class RegistroAcceso(SQLModel, table=True):
     __tablename__ = "RegistrosAcceso"
     id: Optional[int] = Field(default=None, primary_key=True)
-    tarjeta_id: Optional[int] = Field(default=None, foreign_key="TarjetasNFC.uid")
+    tarjeta_id: int = Field(default=None, foreign_key="TarjetasNFC.uid")
     tarjeta: Optional["TarjetaNFC"] = Relationship(back_populates="registros")
 
     fecha_hora_entrada : datetime
@@ -48,6 +66,12 @@ class Pago(SQLModel, table=True):
 
     estudiante_cedula: Optional[str] = Field(default=None, foreign_key="Estudiantes.cedula")
     estudiante: Optional[Estudiante] = Relationship(back_populates="pagos")
+
+
+
+class TarjetaForm(SQLModel):
+    uid: int
+    estudiante_cedula: str
 
 
 class TarjetaNFC(SQLModel, table=True):
