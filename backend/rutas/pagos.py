@@ -17,7 +17,7 @@ async def agregar_pago(request: Pago, db: SessionDep) -> Pago:
     
 @router.get("/", response_model=List[Pago])
 async def obtener_pagos(db: SessionDep) -> List[Pago]:
-    return crud.obtener_todos(Pago, db)
+    return crud.obtener_todos(Pago, db) 
 
 
 @router.get("/{pago_id}", response_model=Pago)

@@ -39,8 +39,8 @@ class RegistroAcceso(SQLModel, table=True):
     tarjeta_id: int = Field(default=None, foreign_key="TarjetasNFC.uid")
     tarjeta: Optional["TarjetaNFC"] = Relationship(back_populates="registros")
 
-    fecha_hora_entrada : datetime
-    fecha_hora_salida : datetime
+    fecha_hora : datetime
+    tipo: str
     acceso_permitido : bool
 
 
@@ -63,6 +63,8 @@ class Estudiante(SQLModel, table=True):
 class Pago(SQLModel, table=True):
     __tablename__ = "Pagos"
     id: Optional[int] = Field(default=None, primary_key=True)
+    monto: float
+    fecha_pago: date
 
     estudiante_cedula: Optional[str] = Field(default=None, foreign_key="Estudiantes.cedula")
     estudiante: Optional[Estudiante] = Relationship(back_populates="pagos")
