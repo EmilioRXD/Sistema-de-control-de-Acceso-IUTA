@@ -1,5 +1,5 @@
 from typing import *
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import *
 from datetime import date,datetime
 from sqlmodel import Field, SQLModel, Relationship
@@ -26,7 +26,7 @@ class AccessResponse(SQLModel):
 class UsuarioForm(SQLModel):
     nombre: str
     apellido: str
-    correo_electronico: str
+    correo_electronico: EmailStr = Field(sa_type=String())
     contraseña: str
 
 
@@ -35,7 +35,7 @@ class Usuario(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str
     apellido: str
-    correo_electronico: str
+    correo_electronico: EmailStr = Field(sa_type=String())
     contraseña: str
 
 
@@ -60,7 +60,7 @@ class Estudiante(SQLModel, table=True):
     cedula: Optional[str] = Field(default=None, primary_key=True)
     nombre : str
     apellido : str
-    correo_electronico : str
+    correo_electronico : EmailStr = Field(sa_type=String())
     telefono : str
     fecha_nacimiento : date
     fecha_registro : datetime
