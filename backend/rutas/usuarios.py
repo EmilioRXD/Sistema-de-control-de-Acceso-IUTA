@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse
 
@@ -12,23 +12,20 @@ from utils import (
     create_refresh_token,
     verify_password,
 )
-from deps import get_current_user, verify_api_key
-
-
+from rutas.deps import *
 
 router = APIRouter()
 
-SessionDep = Annotated[Session, Depends(obtener_db)]
-
-UserDep = Depends(get_current_user)
 
 @router.get("/me", response_model=Usuario)
 async def obtener_usuario_actual(user: Usuario = Depends(get_current_user)):
+    """Obtiene la sesión de usuario actual."""
     return user
 
 
 @router.post("/agregar", dependencies=None, response_model=UsuarioForm)
-async def registrar(request: UsuarioForm, db: SessionDep): 
+async def registrar(request: UsuarioForm, db: SessionDep):
+    """Registrar un nuevo usuario administrador"""
     usuario = crud.obtener_por_campo(Usuario, "correo_electronico",request.correo_electronico, db)
     if usuario is not None:
         raise HTTPException(
@@ -69,21 +66,27 @@ async def iniciar_sesion(db: SessionDep, form_data: Annotated[OAuth2PasswordRequ
 
 @router.get("/", dependencies=[UserDep],response_model=List[Usuario])
 async def obtener_usuarios(db: SessionDep) -> List[Usuario]:
+    """Obtiene una lista con todos los usuarios registrados en el sistema."""
     return crud.obtener_todos(Usuario, db)
 
 
-@router.get("/{usuario_id}", dependencies=[UserDep],response_model=Usuario)
-async def obtener_usuario_por_id(usuario_id: int, db: SessionDep):
+@router.get("/{usuario_correo}", dependencies=[UserDep],response_model=Usuario)
+async def obtener_usuario_por_correo(usuario_correo: str, db: SessionDep):
+    """Obtiene los datos de un usuario (nombre, apellido) mediante el correo"""
     #return db.exec(select(Usuario).filter(Usuario.id == usuario_id)).scalars().first()
-    return crud.obtener_por_campo(Usuario, "id", usuario_id, db=db)
+    return crud.obtener_por_campo(Usuario, "correo_electronico", usuario_correo, db=db)
 
     
-@router.delete("/remover/{usuario_id}", dependencies=[UserDep],response_model=Usuario)
-async def remover_usuario(usuario_id: int, db: SessionDep):
-    return crud.remover(Usuario, "id", usuario_id, db)
+@router.delete("/remover/{usuario_correo}", dependencies=[UserDep],response_model=Usuario)
+async def remover_usuario(usuario_correo: str, db: SessionDep):
+    """Remueve del sistema el usuario correspondiente al correo específicado"""
+    usuario = crud.obtener_por_campo(Usuario, "correo_electronico", usuario_correo, db)
+    return crud.remover(Usuario, "id", usuario.id, db)
 
 
-@router.patch("/actualizar/{usuario_id}", dependencies=[UserDep],response_model=Usuario)
-async def actualizar_usuario(usuario_id: int, db: SessionDep, nuevo_usuario: Usuario):
-    return crud.actualizar(Usuario, usuario_id, nuevo_usuario, db)
+@router.patch("/actualizar/{usuario_correo}", dependencies=[UserDep],response_model=Usuario)
+async def actualizar_usuario(usuario_correo: str, db: SessionDep, nuevo_usuario: Usuario):
+    """Actualizar datos del usuario correspondiente al correo específicado"""
+    usuario = crud.obtener_por_campo(Usuario, "correo_electronico", usuario_correo, db)
+    return crud.actualizar(Usuario, usuario.id, nuevo_usuario, db)
 

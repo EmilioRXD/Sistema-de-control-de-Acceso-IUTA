@@ -1,22 +1,13 @@
 #include <EEPROM.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <PubSubClient.h>
 #include "web_portal.h"
 #include "access_control.h"
 #include <ArduinoJson.h>
 
-
 #define EEPROM_SIZE 512
 
-
-
-enum Mode {
-  MODE_CONFIG,
-  MODE_READER,
-  MODE_WRITER,
-  MODE_SENDER,
-  MODE_NONE
-};
 
 Mode driver_mode = MODE_CONFIG;
 
@@ -27,28 +18,30 @@ void setup() {
   InitCardReader();
 
   bool result = tryConnect();
-  if (result) {driver_mode = MODE_READER;}
+  if (result) {
+    ConnectMQTT();
+    driver_mode = MODE_READER;
+  }
   else {ESP.restart();}
 }
 
 
-String cedula = "30.998.394";
-
 void loop() {
   serverProcess();
+  ProcessMQTT();
 
   switch (driver_mode) {
 
   case MODE_READER: {
-    if (ScanCards() == 0) {
+    if (!Cedula().isEmpty() && ScanCards() == 0) {
       printActualUID();
       driver_mode = MODE_WRITER;
     }
     break;
   }
   case MODE_WRITER: {
-    if (WriteCard(cedula) == 0) {
-      printValue();
+    if (WriteCard(Cedula()) == 0) {
+      printBlock2Data();
       HaltReader();
       driver_mode = MODE_SENDER;
     }
@@ -57,56 +50,21 @@ void loop() {
   case MODE_SENDER: {
     JsonDocument doc; 
     doc["uid"] = getActualUID();
-    doc["estudiante_cedula"] = cedula;
-    doc["fecha_emision"] = "2025-04-24";
-    doc["fecha_expiracion"] = "2025-04-24";
-    doc["activa"] = true;
+    doc["estudiante_cedula"] = Cedula();
 
     String jsonResponse;
-    serializeJson(doc, jsonResponse);  // Convertir a String JSON
+    serializeJson(doc, jsonResponse); 
 
-    Serial.println(jsonResponse);
+    SendDataMQTT(jsonResponse.c_str());
 
-    HTTPClient http;
-
-    http.begin("192.168.0.109", 8000, "/tarjetas/agregar");
-
-    http.addHeader("Content-Type", "application/json");
-    int http_response_code = http.POST(jsonResponse);
-
-    Serial.println(http_response_code);
-    String payload = http.getString();
-    Serial.println(payload);
-    driver_mode = MODE_NONE;
+    BorrarCedula();
+    delay(2000);
+    driver_mode = MODE_READER;
     break;
   }
   case MODE_NONE: {
-    //Serial.println("..");
-    //sleep(100);
     break;
   }
   }
 
 }
-
-/*
-void scan() {
-    HTTPClient http;
-    if (!http.begin("192.168.0.109", 8000, "/usuarios/")) {
-      Serial.println("[ERROR] Unable to connect.");
-    }
-
-    int response_code = http.GET();
-
-    if (response_code > 0) {
-        Serial.print("HTTP Response code: ");
-        Serial.println(response_code);
-        String payload = http.getString();
-        Serial.println(payload);
-    }
-    else {
-        Serial.print("Error code: ");
-        Serial.println(response_code);
-    }
-}
-*/

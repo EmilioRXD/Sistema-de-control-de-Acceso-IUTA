@@ -4,10 +4,10 @@ from config import obtener_db, engine
 from sqlmodel import Session
 import rutas.crud as crud
 from modelos import *
-
+from rutas.deps import SessionDep
 router = APIRouter()
 
-SessionDep = Annotated[Session, Depends(obtener_db)]
+
 
 
 @router.post("/agregar", response_model=Pago)

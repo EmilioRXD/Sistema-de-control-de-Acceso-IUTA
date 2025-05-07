@@ -30,7 +30,7 @@ def obtener_por_campo(clase: Tabla, nombre_campo: str, valor_esperado, db: Sessi
 
 def remover(clase: Tabla, id, db: Session) -> SQLModel:
     obj = obtener_por_id(clase, id, db)
-    db.delete(obj)
+    db.delete(obj)  
     db.commit()
     return obj
 

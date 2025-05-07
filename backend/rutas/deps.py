@@ -1,24 +1,25 @@
+from fastapi import Depends, HTTPException, status, Header
+from fastapi.security import OAuth2PasswordBearer
 from typing import Any, Union
 from datetime import datetime
-from fastapi import Depends, HTTPException, status, Header
 from config import obtener_db
 from decouple import config
 from sqlmodel import Session
-from fastapi.security import OAuth2PasswordBearer
+from rutas import crud
+from jose import jwt
+from pydantic import ValidationError
+from modelos import *
 from utils import (
     ALGORITHM,
     JWT_SECRET_KEY
 )
-from rutas import crud
 
-from jose import jwt
-from pydantic import ValidationError
-from modelos import *
 
 oauth = OAuth2PasswordBearer(
     tokenUrl="usuarios/login",
     scheme_name="JWT"
 )
+
 
 #API-KEY del dispositivo lector
 async def verify_api_key(api_key: str = Header(...)):
@@ -62,3 +63,10 @@ async def get_current_user(token: str = Depends(oauth), db: Session = Depends(ob
         )
     
     return usuario
+
+
+
+#dependencias
+KeyDep     = Depends(verify_api_key)
+UserDep    = Depends(get_current_user)
+SessionDep = Annotated[Session, Depends(obtener_db)]

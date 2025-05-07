@@ -5,11 +5,7 @@ from datetime import date,datetime
 from sqlmodel import Field, SQLModel, Relationship
 
 
-class UsuarioForm(SQLModel):
-    nombre: str
-    apellido: str
-    correo_electronico: str
-    contraseña: str
+
 
 class Token(SQLModel):
     access_token: str
@@ -25,6 +21,15 @@ class AccessResponse(SQLModel):
     detail: str
 
 
+
+
+class UsuarioForm(SQLModel):
+    nombre: str
+    apellido: str
+    correo_electronico: str
+    contraseña: str
+
+
 class Usuario(SQLModel, table=True):
     __tablename__ = "UsuariosAdmin"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -32,6 +37,12 @@ class Usuario(SQLModel, table=True):
     apellido: str
     correo_electronico: str
     contraseña: str
+
+
+class RegistroForm(SQLModel):
+    tarjeta_id: int
+    tipo: str
+    acceso_permitido: bool
 
 class RegistroAcceso(SQLModel, table=True):
     __tablename__ = "RegistrosAcceso"
@@ -85,5 +96,5 @@ class TarjetaNFC(SQLModel, table=True):
     activa: bool
 
     estudiante: Optional[Estudiante] = Relationship(back_populates="tarjeta")
-    registros: List[RegistroAcceso] = Relationship(back_populates="tarjeta")
+    registros: List[RegistroAcceso] = Relationship(back_populates="tarjeta", cascade_delete=True)
 

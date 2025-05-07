@@ -9,8 +9,21 @@ union UID {
   uint32_t integer;
 };
 
+enum Mode {
+  MODE_CONFIG,
+  MODE_READER,
+  MODE_WRITER,
+  MODE_SENDER,
+  MODE_NONE
+};
 
-void printValue();
+void BorrarCedula();
+String Cedula();
+void SendDataMQTT(const char* data);
+void ProcessMQTT();
+void ConnectMQTT();
+
+void printBlock2Data();
 void printActualUID();
 uint32_t getActualUID();
 

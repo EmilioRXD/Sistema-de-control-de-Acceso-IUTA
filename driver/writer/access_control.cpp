@@ -2,26 +2,98 @@
 #include "access_control.h"
 #include <MFRC522v2.h>
 #include <MFRC522DriverSPI.h>
-//#include <MFRC522DriverI2C.h>
 #include <MFRC522DriverPinSimple.h>
 #include <MFRC522Debug.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
 
+
+const char* SERVER_IP        = "192.168.0.109";
+uint16_t    SERVER_MQTT_PORT = 1884;
+
+
+//Lector de Tarjetas-
 #define SS_PIN 21
 
 static UID actual_uid;
+static String cedula;
 
 MFRC522DriverPinSimple ss_pin(SS_PIN);
 MFRC522DriverSPI driver{ss_pin};//spi driver
 MFRC522 mfrc{driver}; //class instance
-
 MFRC522::MIFARE_Key key;
 
 byte block_address = 2; //Bloque de memoria de la tarjeta en que se escribe la cédula.
-
-byte new_block_data[17];
-
+byte new_block_data[17];  //informacion que se escribirá en el bloque 2
 byte buffer_block_size = 18;
-byte block_data_read[18];
+byte block_data_read[18]; //array para leer los datos del bloque 2
+//Lector de tarjetas
+
+
+//MQTT
+WiFiClient wifi_client;
+PubSubClient client(wifi_client);
+
+void msg_callback(char* topic, byte* message, unsigned int length) {
+  Serial.print("[TOPIC] ("); Serial.print(topic);
+  Serial.print("): ");
+  cedula = "";
+
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)message[i]);
+    cedula += (char)message[i];
+  }
+  Serial.println();
+  Serial.print("Cedula: "); Serial.println(cedula);
+}
+
+void BorrarCedula() {
+  cedula = "";
+}
+
+String Cedula() {
+  return cedula;
+}
+
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.println("[INFO] Conectando a server MQTT...");
+
+    if (client.connect("EmisorTarjetas")) {
+      Serial.println("[OK] Conectado correctamente a server MQTT.");
+
+      client.subscribe("emisor_tarjetas/input");
+    }
+    else {
+      Serial.print("[ERROR] Conexion MQTT fallida, rc= "); Serial.print(client.state());
+      Serial.println(" Intentando de nuevo en 3 segundos");
+      delay(3000);
+
+    }
+  }
+}
+
+void ConnectMQTT() {
+  client.setServer(SERVER_IP, SERVER_MQTT_PORT);
+  client.setCallback(msg_callback);
+}
+void ProcessMQTT() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+}
+
+void SendDataMQTT(const char* data) {
+  client.publish("emisor_tarjetas/output", data);
+}
+
+//MQTT
+
+
+
+
 
 bool authenticate_keyA() {
   if (mfrc.PCD_Authenticate(0x60, block_address, &key, &(mfrc.uid)) != 0) {
@@ -31,18 +103,18 @@ bool authenticate_keyA() {
 }
 
 
-void printValue() {
+void printBlock2Data() {
   if (!authenticate_keyA()) {
-    Serial.println("Authentication 2 failed.");
+    Serial.println("[ERROR] Autenticacion KeyA.");
     return;
   }
 
   if (mfrc.MIFARE_Read(block_address, block_data_read, &buffer_block_size) != 0) {
-    Serial.println("Read from block failed.");
+    Serial.println("[ERROR] fallo al leer el bloque 2 de la tarjeta.");
     return;
   }
 
-  Serial.print("Data in block 2: ");
+  Serial.print("Datos en Bloque 2: ");
   for (byte i = 0; i < 16; i++) {
     Serial.print((char)block_data_read[i]);
   }
@@ -55,16 +127,16 @@ int8_t WriteCard(String value) {
   value.getBytes(new_block_data, 16);
 
   if (!authenticate_keyA()) {
-    Serial.println("Authentication failed at writing.");
+    Serial.println("[ERROR] Autenticación KeyA al escribir datos.");
     return -1;
   }
 
   if (mfrc.MIFARE_Write(block_address, new_block_data, 16) != 0) {
-    Serial.println("Write Failed.");
+    Serial.println("[ERROR] Fallo al escribir los datos en la tarjeta");
     return -2;
   }
 
-  Serial.println("Data written succesfully in block 2.");
+  Serial.println("[OK] Datos escritos correctamente en la tarjeta");
   return 0;
   
 
@@ -111,10 +183,9 @@ int8_t ScanCards() {
   if (!mfrc.PICC_ReadCardSerial())
     return -2;
 
-  for (byte i = 0; i < mfrc.uid.size;i++) {
+  for (byte i = 0;i < mfrc.uid.size;i++) {
     actual_uid.bytes[i] = mfrc.uid.uidByte[i];
   }
-  //printActualUID();
   return 0;
   
 }

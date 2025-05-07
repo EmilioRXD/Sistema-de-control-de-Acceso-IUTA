@@ -12,6 +12,7 @@ const String API_KEY = "ESP32-7F3A-9B2E-4D5C";
 
 
 String server_name = "http://192.168.0.109:8000/estudiantes/verificar_acceso/";
+String server_ip = "http://192.168.0.109:8000/";
 
 enum Mode {
   MODE_CONFIG,
@@ -87,15 +88,37 @@ void loop() {
           Serial.print("[ERROR]: "); Serial.println(String(doc["detail"]));
           _acceso_denegado();
         }
-        
+        http.end();
+        Serial.println("Enviando registro...");
+
+        JsonDocument registro;
+        registro["tarjeta_id"] = GetActualUID();
+        registro["tipo"] = "ENTRADA";
+        registro["acceso_permitido"] = permitido;
+
+        String registro_str;
+        serializeJson(registro, registro_str);
+
+
+        server_path = server_ip + "registros/agregar";
+        http.begin(server_path);
+        http.addHeader("api-key", API_KEY);
+
+        int post_response_code = http.POST(registro_str);
+
+        if (post_response_code > 0) {
+          Serial.print("HTTP Response code: "); Serial.println(http.errorToString(response_code)); 
+          String payload = http.getString();
+          Serial.println(payload);
+        }
+
       }
       else {
         Serial.print("Error code: "); Serial.println(response_code);
       }
 
       HaltReader();
-      http.end();
-      delay(3000);
+      delay(1000);
     }
 
   }
