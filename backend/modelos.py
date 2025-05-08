@@ -63,7 +63,7 @@ class Estudiante(SQLModel, table=True):
     correo_electronico : EmailStr = Field(sa_type=String())
     telefono : str
     fecha_nacimiento : date
-    fecha_registro : datetime
+    fecha_registro : date
 
     pagos: List["Pago"] = Relationship(back_populates="estudiante")
 

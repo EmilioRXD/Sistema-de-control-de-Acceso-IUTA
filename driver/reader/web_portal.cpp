@@ -53,8 +53,8 @@ bool connectToWiFi() {
 
 void borrarCredenciales() {
   // Escribe cadenas vacías en las posiciones de memoria
-  EEPROM.writeString(SSID_ADDR, "Zeus");
-  EEPROM.writeString(PASS_ADDR, "Lef#42AB*87$");
+  EEPROM.writeString(SSID_ADDR, "");
+  EEPROM.writeString(PASS_ADDR, "");
 
   // Confirma los cambios en la EEPROM
   EEPROM.commit();

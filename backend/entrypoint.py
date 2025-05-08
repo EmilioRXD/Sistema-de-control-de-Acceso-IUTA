@@ -23,7 +23,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator:
 app = FastAPI(
     title="API Sistema de Control de Acceso",
     version="0.0.1",
-    lifespan=lifespan
+    lifespan=lifespan,
+    redoc_url="/redocs"
 )
 
 iniciar_db()

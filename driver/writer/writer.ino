@@ -16,6 +16,7 @@ void setup() {
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
   InitCardReader();
+  borrarCredenciales();
 
   bool result = tryConnect();
   if (result) {

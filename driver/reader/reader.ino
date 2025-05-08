@@ -46,7 +46,7 @@ void setup() {
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
   pinMode(LED, OUTPUT);
-  //borrarCredenciales();
+  borrarCredenciales();
 
   InitCardReader();
 
