@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Path, Depends, status
-from datetime import datetime
+from datetime import datetime, date, time
 from config import obtener_db, engine
 from sqlmodel import Session
 import rutas.crud as crud
@@ -34,14 +34,30 @@ async def agregar_registro(request: RegistroForm, db: SessionDep) -> RegistroAcc
     return crud.añadir(registro, db)
     
     
-@router.get("/", dependencies=[UserDep],response_model=List[RegistroAcceso])
-async def obtener_registros(db: SessionDep) -> List[RegistroAcceso]:
+@router.get("/accesos_total", dependencies=[UserDep],response_model=List[RegistroAcceso])
+async def obtener_accesos_total(db: SessionDep) -> List[RegistroAcceso]:
     """Obtiene Todos los registros del sistema."""
     return crud.obtener_todos(RegistroAcceso, db)
 
 
+@router.get("/accesos_por_rango_de_fecha", dependencies=[UserDep], response_model=int)
+async def obtener_accesos_por_rango_de_fecha(inicio: date, fin: date, db: SessionDep) -> int:
+    query = select(RegistroAcceso).filter(RegistroAcceso.fecha_hora.date() > inicio).filter(RegistroAcceso.fecha_hora.date() < fin)
+    accesos_fecha = db.exec(query).scalars().all()
+    return accesos_fecha
+
+
+
+
+@router.get("/hora_pico", dependencies=[UserDep], response_model=time)
+async def obtener_hora_pico_accesos(db: SessionDep) -> time:
+    query = select(RegistroAcceso).filter(RegistroAcceso.fecha_hora.date() == date.today())
+    accesos_hoy = db.exec(query).scalars().all()
+     
+
+
 @router.get("/{estudiante_cedula}", dependencies=[UserDep], response_model=List[RegistroAcceso])
-async def obtener_registros_de_estudiante(estudiante_cedula: str, db: SessionDep):
+async def obtener_accesos_de_estudiante(estudiante_cedula: str, db: SessionDep):
     """Obtiene todos los registros de entrada/salida de un estudiante"""
     tarjeta = crud.obtener_por_campo(TarjetaNFC, "estudiante_cedula", estudiante_cedula, db)
 
@@ -58,13 +74,3 @@ async def obtener_registros_de_estudiante(estudiante_cedula: str, db: SessionDep
 async def obtener_registro_por_id(registro_id: int, db: SessionDep):
     return crud.obtener_por_campo(RegistroAcceso, "id", registro_id, db=db)
     
-""""
-@router.delete("/remover/{registro_id}", response_model=RegistroAcceso)
-async def remover_registro(registro_id: int, db: SessionDep):
-    return crud.remover(RegistroAcceso, "id", registro_id, db)
-
-
-@router.patch("/actualizar/{registro_id}", response_model=RegistroAcceso)
-async def actualizar_registro(registro_id: int, db: SessionDep, nuevo_registro: RegistroAcceso):
-    return crud.actualizar(RegistroAcceso, registro_id, nuevo_registro, db)
-"""

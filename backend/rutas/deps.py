@@ -14,6 +14,8 @@ from utils import (
     JWT_SECRET_KEY
 )
 
+#Dependencias de los Endpoints
+
 
 oauth = OAuth2PasswordBearer(
     tokenUrl="usuarios/login",

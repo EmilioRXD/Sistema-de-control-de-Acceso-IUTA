@@ -6,6 +6,7 @@ import rutas.crud as crud
 from modelos import *
 from datetime import date
 from rutas.deps import *
+from unidecode import unidecode
 
 
 router = APIRouter()
@@ -23,13 +24,25 @@ async def registrar_estudiante(request: Estudiante, db: SessionDep) -> Estudiant
             detail="Este estudiante ya existe en el sistema."
         )
     
-    return crud.añadir(request, db)
+    estudiante = request
+    estudiante.carrera = unidecode(request.carrera).upper()
+    
+    return crud.añadir(estudiante, db)
     
 
 @router.get("/", dependencies=[UserDep], response_model=List[Estudiante])
 async def obtener_estudiantes(db: SessionDep) -> List[Estudiante]:
     """Obtiene todos los estudiantes registrados en el sistema"""
     return crud.obtener_todos(Estudiante, db)
+
+
+@router.get("/estudiantes_por_carrera", dependencies=[UserDep], response_model=Estudiante)
+async def obtener_estudiantes_por_carrera(carrera: str, db: SessionDep):
+    """Obtiene los datos del estudiante correspondiente a la cédula"""
+    carrera_str = unidecode(carrera).upper()
+    query = select(Estudiante).filter(Estudiante.carrera == carrera_str)
+    estudiantes = db.exec(query).scalars().all()
+    return estudiantes
 
 
 @router.get("/{estudiante_cedula}", dependencies=[UserDep], response_model=Estudiante)
@@ -64,6 +77,9 @@ async def verificar_acceso(estudiante_cedula: str, tarjeta_id: int, db: SessionD
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El estudiante o tarjeta no existe en el sistema.",
         )
+
+    if estudiante.pago_pendiente == False:
+        return {"result": False, "detail": "El estudiante no ha cancelado la cuota."}
 
     #si no coinciden la cedula y serial de la tarjeta con las que estan guardadas en el sistema:
     if estudiante.tarjeta.uid != tarjeta.uid or tarjeta.estudiante_cedula != estudiante_cedula:

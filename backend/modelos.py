@@ -6,6 +6,7 @@ from sqlmodel import Field, SQLModel, Relationship
 
 
 
+# Clases de entrada y salida
 
 class Token(SQLModel):
     access_token: str
@@ -20,15 +21,24 @@ class AccessResponse(SQLModel):
     result: bool
     detail: str
 
-
-
-
 class UsuarioForm(SQLModel):
     nombre: str
     apellido: str
     correo_electronico: EmailStr = Field(sa_type=String())
     contraseña: str
 
+class TarjetaForm(SQLModel):
+    uid: int
+    estudiante_cedula: str
+
+class RegistroForm(SQLModel):
+    tarjeta_id: int
+    tipo: str
+    acceso_permitido: bool
+
+
+
+# Tablas ORM
 
 class Usuario(SQLModel, table=True):
     __tablename__ = "UsuariosAdmin"
@@ -39,10 +49,7 @@ class Usuario(SQLModel, table=True):
     contraseña: str
 
 
-class RegistroForm(SQLModel):
-    tarjeta_id: int
-    tipo: str
-    acceso_permitido: bool
+
 
 class RegistroAcceso(SQLModel, table=True):
     __tablename__ = "RegistrosAcceso"
@@ -60,10 +67,12 @@ class Estudiante(SQLModel, table=True):
     cedula: Optional[str] = Field(default=None, primary_key=True)
     nombre : str
     apellido : str
+    carrera: str
     correo_electronico : EmailStr = Field(sa_type=String())
     telefono : str
     fecha_nacimiento : date
     fecha_registro : date
+    pago_pendiente: bool
 
     pagos: List["Pago"] = Relationship(back_populates="estudiante")
 
@@ -80,11 +89,6 @@ class Pago(SQLModel, table=True):
     estudiante_cedula: Optional[str] = Field(default=None, foreign_key="Estudiantes.cedula")
     estudiante: Optional[Estudiante] = Relationship(back_populates="pagos")
 
-
-
-class TarjetaForm(SQLModel):
-    uid: int
-    estudiante_cedula: str
 
 
 class TarjetaNFC(SQLModel, table=True):

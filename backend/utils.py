@@ -6,11 +6,11 @@ from typing import Union, Any
 from jose import jwt
 from decouple import config
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30 minutes
-REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days
+ACCESS_TOKEN_EXPIRE_MINUTES = 60*2  # 2 horas
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 dias
 ALGORITHM = config("algorithm")
-JWT_SECRET_KEY = config("secret")  # should be kept secret
-JWT_REFRESH_SECRET_KEY = config("refresh_key")   # should be kept secret
+JWT_SECRET_KEY = config("secret") 
+JWT_REFRESH_SECRET_KEY = config("refresh_key")
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

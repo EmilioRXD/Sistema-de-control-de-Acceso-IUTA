@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Path, Depends
+from fastapi import *
 from config import obtener_db
 from sqlmodel import Session, SQLModel
 from modelos import *

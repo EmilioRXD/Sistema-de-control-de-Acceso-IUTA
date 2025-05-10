@@ -5,6 +5,7 @@ import rutas.crud as crud
 from modelos import *
 import json
 import time
+from typing import Tuple
 from rutas.deps import SessionDep
 import config
 from config import(
@@ -68,6 +69,7 @@ def agregar_tarjeta_con_emisor(cedula_estudiante: str, db: SessionDep):
 
 
 
+
 @router.post("/agregar", response_model=TarjetaNFC)
 async def agregar_tarjeta_manualmente(request: TarjetaForm, db: SessionDep) -> TarjetaNFC:
     """Añadir una tarjeta manualmente al sistema si ya se conoce el número de serial."""
@@ -104,10 +106,17 @@ async def agregar_tarjeta_manualmente(request: TarjetaForm, db: SessionDep) -> T
     return tarjeta
     
     
-@router.get("/", response_model=List[TarjetaNFC])
+@router.get("/tarjetas_total", response_model=List[TarjetaNFC])
 async def obtener_tarjetas(db: SessionDep) -> List[TarjetaNFC]:
     """Obtener todas las tarjetas registradas en el sistema."""
     return crud.obtener_todos(TarjetaNFC, db)
+
+@router.get("/tarjetas_por_fecha_de_emision", response_model=List[TarjetaNFC])
+async def obtener_tarjetas_por_rango_fecha_de_emision(inicio: date, fin: date ,db: SessionDep) -> List[TarjetaNFC]:
+    query = select(TarjetaNFC).filter(TarjetaNFC.fecha_emision > inicio).filter(TarjetaNFC.fecha_emision < fin)
+    tarjetas = db.exec(query).scalars().all()
+    return tarjetas
+
 
 
 @router.delete("/remover/{tarjeta_id}", response_model=TarjetaNFC)
