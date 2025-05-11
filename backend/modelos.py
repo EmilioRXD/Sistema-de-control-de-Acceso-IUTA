@@ -1,7 +1,7 @@
 from typing import *
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import *
-from datetime import date,datetime
+from datetime import date,datetime, time
 from sqlmodel import Field, SQLModel, Relationship
 
 
@@ -45,7 +45,7 @@ class Usuario(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str
     apellido: str
-    correo_electronico: EmailStr = Field(sa_type=String())
+    correo_electronico: EmailStr = Field(sa_type=String(150))
     contraseña: str
 
 
@@ -57,7 +57,8 @@ class RegistroAcceso(SQLModel, table=True):
     tarjeta_id: int = Field(default=None, foreign_key="TarjetasNFC.uid")
     tarjeta: Optional["TarjetaNFC"] = Relationship(back_populates="registros")
 
-    fecha_hora : datetime
+    fecha : date
+    hora: time
     tipo: str
     acceso_permitido : bool
 
@@ -68,7 +69,7 @@ class Estudiante(SQLModel, table=True):
     nombre : str
     apellido : str
     carrera: str
-    correo_electronico : EmailStr = Field(sa_type=String())
+    correo_electronico : EmailStr = Field(sa_type=String(150))
     telefono : str
     fecha_nacimiento : date
     fecha_registro : date

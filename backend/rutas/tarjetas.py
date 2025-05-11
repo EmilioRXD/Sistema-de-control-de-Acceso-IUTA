@@ -113,7 +113,7 @@ async def obtener_tarjetas(db: SessionDep) -> List[TarjetaNFC]:
 
 @router.get("/tarjetas_por_fecha_de_emision", response_model=List[TarjetaNFC])
 async def obtener_tarjetas_por_rango_fecha_de_emision(inicio: date, fin: date ,db: SessionDep) -> List[TarjetaNFC]:
-    query = select(TarjetaNFC).filter(TarjetaNFC.fecha_emision > inicio).filter(TarjetaNFC.fecha_emision < fin)
+    query = select(TarjetaNFC).filter(TarjetaNFC.fecha_emision >= inicio).filter(TarjetaNFC.fecha_emision <= fin)
     tarjetas = db.exec(query).scalars().all()
     return tarjetas
 

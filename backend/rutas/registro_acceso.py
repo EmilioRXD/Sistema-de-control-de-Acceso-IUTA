@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Path, Depends, status
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 from config import obtener_db, engine
 from sqlmodel import Session
 import rutas.crud as crud
@@ -27,7 +27,8 @@ async def agregar_registro(request: RegistroForm, db: SessionDep) -> RegistroAcc
     registro = RegistroAcceso(
         tarjeta_id=request.tarjeta_id,
         tarjeta=tarjeta,
-        fecha_hora=datetime.now(),
+        fecha=datetime.now().date(),
+        hora=datetime.now().time(),
         tipo=request.tipo,
         acceso_permitido=request.acceso_permitido)
     
@@ -40,19 +41,44 @@ async def obtener_accesos_total(db: SessionDep) -> List[RegistroAcceso]:
     return crud.obtener_todos(RegistroAcceso, db)
 
 
-@router.get("/accesos_por_rango_de_fecha", dependencies=[UserDep], response_model=int)
-async def obtener_accesos_por_rango_de_fecha(inicio: date, fin: date, db: SessionDep) -> int:
-    query = select(RegistroAcceso).filter(RegistroAcceso.fecha_hora.date() > inicio).filter(RegistroAcceso.fecha_hora.date() < fin)
+@router.get("/accesos_por_rango_de_fecha", dependencies=[UserDep], response_model=List[RegistroAcceso])
+async def obtener_accesos_por_rango_de_fecha(inicio: str, fin: str, db: SessionDep):
+    """Obtiene los accesos entre un rango de fecha. La fecha se especifica en formato Año-mes-dia"""
+    inicio_fecha = datetime.strptime(inicio, '%Y-%m-%d').date()
+    fin_fecha = datetime.strptime(fin, '%Y-%m-%d').date()
+
+ 
+    query = select(RegistroAcceso).filter(RegistroAcceso.fecha >= inicio_fecha).filter(RegistroAcceso.fecha <= fin_fecha)
     accesos_fecha = db.exec(query).scalars().all()
     return accesos_fecha
 
+@router.get("/accesos_por_hora", dependencies=[UserDep])
+async def obtener_accesos_por_hora(hora: int, db: SessionDep):
+    """Obtiene los accesos en una hora especifica. la hora se escribe en formato 24h"""
+    hora_rango_menor = time(hora, 0, 0)
+    hora_rango_mayor = time(hora+1,0,0)
+    query = select(RegistroAcceso).filter(RegistroAcceso.hora > hora_rango_menor).filter(RegistroAcceso.hora < hora_rango_mayor)
+    return db.exec(query).scalars().all()
 
 
 
-@router.get("/hora_pico", dependencies=[UserDep], response_model=time)
-async def obtener_hora_pico_accesos(db: SessionDep) -> time:
-    query = select(RegistroAcceso).filter(RegistroAcceso.fecha_hora.date() == date.today())
+@router.get("/hora_pico", dependencies=[UserDep])
+async def obtener_hora_pico_accesos(db: SessionDep):
+
+    query = select(RegistroAcceso).filter(RegistroAcceso.fecha == date.today())
     accesos_hoy = db.exec(query).scalars().all()
+
+    horas = [i.hora for i in accesos_hoy]
+
+    conteo = {}
+
+    for i_hora in horas:
+        hora_completa = str(i_hora)
+        hora = hora_completa.split(':')[0] + ":00:00"
+        conteo[hora] = conteo.get(hora, 0) + 1
+
+    hora_pico = max(conteo.items(), key=lambda x: x[1])
+    return hora_pico[0]
      
 
 
